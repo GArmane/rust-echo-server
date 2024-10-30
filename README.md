@@ -26,27 +26,30 @@ Prerequisites
 
 To check your Rust installation, run:
 
-> rustc --version
+```bash
+$ rustc --version
+```
+
 
 # Installation
 
 1. Clone this repository:
 
 ```bash
-➜ git clone https://github.com/GArmane/rust-http-server.git
-➜ cd rust-http-server
+$ git clone https://github.com/GArmane/rust-http-server.git
+$ cd rust-http-server
 ```
 
 2. Run tests to ensure the server works as expected:
 
 ```bash
-➜ cargo test
+$ cargo test
 ```
 
 3. Build project with cargo:
 
 ```bash
-➜ cargo build --release
+$ cargo build --release
 ```
 
 # Usage
@@ -54,7 +57,7 @@ To check your Rust installation, run:
 To start the server, run:
 
 ```bash
-cargo run
+$ cargo run
 ```
 
 The server will start on 127.0.0.1:7878 by default. You can access it by opening a web browser and navigating to http://127.0.0.1:7878.
