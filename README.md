@@ -70,7 +70,7 @@ Once the server is running, it can serve static HTML files placed in a predefine
 
 To change the port or host address, update the code in main.rs:
 ```rust
-let address = "127.0.0.1:7878";
+let addr = "127.0.0.1:7878";
 ```
 You can also extend the server’s functionality by adding more route handlers or response types.
 
