@@ -1,6 +1,7 @@
-use std::fs;
 use std::io::{BufRead, BufReader, Result, Write};
 use std::net::{TcpListener, TcpStream};
+use std::time::Duration;
+use std::{fs, thread};
 
 fn main() -> Result<()> {
     let addr = "127.0.0.1:7878";
@@ -8,20 +9,23 @@ fn main() -> Result<()> {
         .unwrap()
         .incoming()
         .map(|stream| stream.unwrap())
-        .for_each(handle_connection);
+        .for_each(|stream| {
+            thread::spawn(|| handle_connection(stream));
+        });
 
     Ok(())
 }
 
 fn handle_connection(mut stream: TcpStream) {
-    let (status_line, filename) = BufReader::new(&stream)
-        .lines()
-        .next()
-        .unwrap()
-        .unwrap()
-        .eq("GET / HTTP/1.1")
-        .then_some(("HTTP/1.1 200 OK", "./public/index.html"))
-        .unwrap_or(("HTTP/1.1 404 NOT FOUND", "./public/404.html"));
+    let request_line = BufReader::new(&stream).lines().next().unwrap().unwrap();
+    let (status_line, filename) = match &request_line[..] {
+        "GET / HTTP/1.1" => ("HTTP/1.1 200 OK", "./public/index.html"),
+        "GET /sleep HTTP/1.1" => {
+            thread::sleep(Duration::from_secs(5));
+            ("HTTP/1.1 200 OK", "./public/index.html")
+        }
+        _ => ("HTTP/1.1 404 NOT FOUND", "./public/404.html"),
+    };
 
     let contents = fs::read_to_string(filename).unwrap();
     let response = format!(
