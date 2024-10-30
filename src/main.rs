@@ -4,29 +4,31 @@ use std::net::{TcpListener, TcpStream};
 
 fn main() -> Result<()> {
     let addr = "127.0.0.1:7878";
-    let listener = TcpListener::bind(addr).unwrap();
-
-    for stream in listener.incoming() {
-        let stream = stream.unwrap();
-        handle_connection(stream);
-    }
+    TcpListener::bind(addr)
+        .unwrap()
+        .incoming()
+        .map(|stream| stream.unwrap())
+        .for_each(handle_connection);
 
     Ok(())
 }
 
 fn handle_connection(mut stream: TcpStream) {
-    let buf_reader = BufReader::new(&stream);
-    let request_line = buf_reader.lines().next().unwrap().unwrap();
-
-    let (status_line, filename) = if request_line == "GET / HTTP/1.1" {
-        ("HTTP/1.1 200 OK", "./public/index.html")
-    } else {
-        ("HTTP/1.1 404 NOT FOUND", "./public/404.html")
-    };
+    let (status_line, filename) = BufReader::new(&stream)
+        .lines()
+        .next()
+        .unwrap()
+        .unwrap()
+        .eq("GET / HTTP/1.1")
+        .then_some(("HTTP/1.1 200 OK", "./public/index.html"))
+        .unwrap_or(("HTTP/1.1 404 NOT FOUND", "./public/404.html"));
 
     let contents = fs::read_to_string(filename).unwrap();
-    let length = contents.len();
-
-    let response = format!("{status_line}\r\nContent-Length: {length}\r\n\r\n{contents}");
+    let response = format!(
+        "{}\r\nContent-Length: {}\r\n\r\n{}",
+        status_line,
+        contents.len(),
+        contents
+    );
     stream.write_all(response.as_bytes()).unwrap();
 }
