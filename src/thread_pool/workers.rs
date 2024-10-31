@@ -5,17 +5,27 @@ use std::{
 };
 
 pub struct Worker<T> {
-    id: usize,
-    thread: JoinHandle<T>,
+    pub id: usize,
+    pub thread: Option<JoinHandle<T>>,
 }
 
 impl Worker<()> {
     pub fn new(id: usize, receiver: Arc<Mutex<Receiver<Job>>>) -> Self {
         let thread = thread::spawn(move || loop {
-            let job = receiver.lock().unwrap().recv().unwrap();
-            println!("Worker {id} got a job; executing...");
-            job();
+            match receiver.lock().unwrap().recv() {
+                Ok(job) => {
+                    println!("Worker {id} got a job; executing...");
+                    job();
+                }
+                Err(_) => {
+                    println!("Worker {id} disconnected; shutting down.");
+                    break;
+                }
+            }
         });
-        Worker { id, thread }
+        Worker {
+            id,
+            thread: Some(thread),
+        }
     }
 }
