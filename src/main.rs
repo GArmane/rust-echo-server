@@ -3,14 +3,18 @@ use std::net::{TcpListener, TcpStream};
 use std::time::Duration;
 use std::{fs, thread};
 
+use http_server::thread_pool::ThreadPool;
+
 fn main() -> Result<()> {
     let addr = "127.0.0.1:7878";
+    let thread_pool = ThreadPool::build(16).unwrap();
+
     TcpListener::bind(addr)
         .unwrap()
         .incoming()
         .map(|stream| stream.unwrap())
         .for_each(|stream| {
-            thread::spawn(|| handle_connection(stream));
+            thread_pool.execute(|| handle_connection(stream));
         });
 
     Ok(())
