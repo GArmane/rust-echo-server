@@ -74,6 +74,16 @@ let addr = "127.0.0.1:7878";
 ```
 You can also extend the server’s functionality by adding more route handlers or response types.
 
+# Next tasks
+
+These are the next tasks, suggested by the Rust Book.
+
+1. Add more documentation to ThreadPool and its public methods.
+2. Add tests of the library’s functionality.
+3. Change calls to unwrap to more robust error handling.
+4. Use ThreadPool to perform some task other than serving web requests.
+5. Find a thread pool crate on crates.io and implement a similar web server using the crate instead. Then compare its API and robustness to the thread pool we implemented.
+
 # License
 
 This project is licensed under The Unlicense - see the LICENSE file for details.

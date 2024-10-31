@@ -2,14 +2,17 @@ pub mod errors;
 mod jobs;
 mod workers;
 
-use std::sync::{mpsc, Arc, Mutex};
+use std::sync::{
+    mpsc::{self, Sender},
+    Arc, Mutex,
+};
 
 use errors::PoolCreationError;
 use jobs::Job;
 use workers::Worker;
 
 pub struct ThreadPool<T> {
-    sender: mpsc::Sender<Job>,
+    sender: Option<Sender<Job>>,
     workers: Vec<Worker<T>>,
 }
 
@@ -32,7 +35,11 @@ impl ThreadPool<()> {
         F: FnOnce() + Send + 'static,
     {
         let job = Box::new(f);
-        self.sender.send(job).unwrap();
+        self.sender
+            .as_ref()
+            .expect(" Should have a sender")
+            .send(job)
+            .unwrap();
     }
 
     fn init(size: usize) -> Self {
@@ -44,6 +51,19 @@ impl ThreadPool<()> {
             vec.extend((0..size).map(|id| Worker::new(id, Arc::clone(&receiver))));
             vec
         };
-        ThreadPool { sender, workers }
+        ThreadPool {
+            sender: Some(sender),
+            workers,
+        }
+    }
+}
+
+impl<T> Drop for ThreadPool<T> {
+    fn drop(&mut self) {
+        drop(self.sender.take());
+        self.workers.iter_mut().for_each(|worker| {
+            println!("Shutting down worker {}", worker.id);
+            worker.thread.take().unwrap().join().unwrap();
+        });
     }
 }
